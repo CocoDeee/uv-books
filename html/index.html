@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Books</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  font-family: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+}
+
+/* ── OVERLAY ── */
+#ui {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  justify-content: center;
+  align-items: center;
+}
+#ui.on { display: flex; }
+
+/* ── HARDCOVER BOOK SHELL ── */
+.book {
+  display: flex;
+  width: 860px;
+  height: 560px;
+  border-radius: 3px 10px 10px 3px;
+  box-shadow:
+    -14px 0 0 4px #2a0a04,
+    -18px 4px 30px rgba(0,0,0,0.8),
+    0 30px 80px rgba(0,0,0,0.6),
+    inset 0 0 0 1px rgba(255,255,255,0.04);
+  position: relative;
+}
+
+/* ═══ SPINE ═══ */
+.book::before {
+  content: '';
+  position: absolute;
+  left: -14px; top: 0; bottom: 0;
+  width: 14px;
+  background: linear-gradient(90deg,
+    #1a0a06 0%,
+    #3d1208 40%,
+    #5a1a0e 70%,
+    #3d1208 100%
+  );
+  border-radius: 3px 0 0 3px;
+  z-index: 2;
+}
+
+/* Spine decorative gold lines */
+.book::after {
+  content: '';
+  position: absolute;
+  left: -14px; top: 30px;
+  width: 14px; height: 1px;
+  background: linear-gradient(90deg, #3d1208, #c9a84c, #3d1208);
+  z-index: 3;
+  box-shadow: 0 6px 0 0 rgba(201,168,76,0.5), 0 500px 0 0 rgba(201,168,76,0.3), 0 494px 0 0 rgba(201,168,76,0.5);
+}
+
+/* ═══════════════════════════════
+   LEFT PAGE
+═══════════════════════════════ */
+.page-left {
+  width: 50%;
+  height: 100%;
+  background:
+    linear-gradient(108deg, #d4c4a8 0%, #ede3cc 12%, #f0e8d5 100%);
+  border-radius: 0;
+  border-right: 1px solid #c8b898;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* subtle paper texture overlay */
+.page-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      transparent, transparent 27px,
+      rgba(90,60,20,0.07) 27px, rgba(90,60,20,0.07) 28px
+    );
+  pointer-events: none;
+}
+
+/* gutter shadow from binding */
+.page-left::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 28px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.22), transparent);
+  pointer-events: none;
+}
+
+/* corner brackets */
+.lc {
+  position: absolute;
+  width: 18px; height: 18px;
+  border-color: rgba(140,100,30,0.3);
+  border-style: solid;
+  pointer-events: none;
+  z-index: 1;
+}
+.lc-tl { top: 22px; left: 18px; border-width: 1px 0 0 1px; }
+.lc-bl { bottom: 22px; left: 18px; border-width: 0 0 1px 1px; }
+.lc-tr { top: 22px; right: 14px; border-width: 1px 1px 0 0; }
+.lc-br { bottom: 22px; right: 14px; border-width: 0 1px 1px 0; }
+
+/* left panel content areas */
+.lp { display: none; flex-direction: column; align-items: center; justify-content: center;
+      width: 100%; height: 100%; padding: 38px 18px 38px 34px; position: relative; z-index: 1; }
+.lp.show { display: flex; }
+
+/* ── Decorative panel ── */
+.decor-panel { gap: 12px; text-align: center; }
+.decor-orn  { font-size: 22px; color: #8b2a16; opacity: 0.6; line-height: 1; }
+.decor-rule { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, #a07830, transparent); }
+.decor-text { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+              color: #4a2e10; opacity: 0.6; line-height: 2; }
+
+/* ── Preview panel (writing) ── */
+.preview-panel { gap: 0; align-items: flex-start; justify-content: flex-start; }
+.prev-title {
+  font-size: 14px; color: #1a0a06; text-align: center; width: 100%;
+  border-bottom: 1px solid rgba(90,60,20,0.18);
+  padding-bottom: 7px; margin-bottom: 7px; line-height: 1.35; font-style: italic;
+}
+.prev-num {
+  font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #4a2e10; opacity: 0.45; text-align: center; width: 100%; margin-bottom: 10px;
+}
+.prev-body {
+  font-size: 12.5px; color: #1a0a06; line-height: 1.85;
+  white-space: pre-wrap; overflow: hidden; flex: 1; opacity: 0.65; width: 100%;
+}
+
+/* ── Read left panel ── */
+.read-panel { align-items: flex-start; justify-content: flex-start; }
+.read-pnum  {
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #4a2e10; margin-bottom: 10px;
+}
+.read-body {
+  font-size: 13px; color: #1a0a06; line-height: 1.9;
+  white-space: pre-wrap; overflow: hidden; flex: 1; width: 100%; opacity: 0.88;
+}
+
+/* ── Published splash ── */
+.pub-panel { gap: 10px; text-align: center; }
+.pub-icon  { font-size: 36px; }
+.pub-title { font-size: 18px; color: #1a0a06; font-style: italic; }
+.pub-sub   { font-size: 11px; color: #4a2e10; opacity: 0.5; }
+
+/* ═══════════════════════════════
+   RIGHT PAGE  — the main cover board is the right half
+═══════════════════════════════ */
+.page-right {
+  width: 50%;
+  height: 100%;
+  background:
+    linear-gradient(252deg, #c8b898 0%, #f5eed8 12%, #f5eed8 100%);
+  border-radius: 0 10px 10px 0;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 40px 26px 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* right page paper texture lines */
+.page-right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      transparent, transparent 27px,
+      rgba(90,60,20,0.065) 27px, rgba(90,60,20,0.065) 28px
+    );
+  pointer-events: none;
+}
+
+/* gutter shadow on right from center crease */
+.page-right::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 18px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.10), transparent);
+  pointer-events: none;
+}
+
+/* Steps */
+.step { display: none; flex-direction: column; flex: 1; position: relative; z-index: 1; }
+.step.on { display: flex; }
+
+.step-label {
+  font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: #8b2a16; opacity: 0.9; margin-bottom: 4px;
+}
+.step-title {
+  font-size: 19px; color: #1a0a06; line-height: 1.25; margin-bottom: 14px;
+}
+
+/* inputs */
+input[type=text] {
+  display: block; width: 100%; background: transparent;
+  border: none; border-bottom: 1px solid rgba(90,60,20,0.22);
+  outline: none; font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 15px; color: #1a0a06; padding: 6px 2px; caret-color: #8b2a16;
+}
+input[type=text]:focus { border-bottom-color: #8b2a16; }
+
+textarea {
+  display: block; width: 100%; flex: 1; background: transparent;
+  border: none; outline: none;
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 13.5px; color: #1a0a06; line-height: 1.88;
+  resize: none; padding: 8px 2px; caret-color: #8b2a16;
+  overflow-y: auto; position: relative; z-index: 1;
+}
+
+::placeholder { color: #4a2e10; opacity: 0.25; font-style: italic; }
+
+.char-note {
+  font-size: 9px; color: #4a2e10; opacity: 0.38;
+  text-align: right; margin-top: 2px; margin-bottom: 4px;
+}
+.char-note.warn { color: #8b2a16; opacity: 0.85; }
+
+/* page dots */
+#dots { display: flex; gap: 4px; justify-content: center; margin-bottom: 8px; }
+.dot { width: 5px; height: 5px; border-radius: 50%; background: #c8b490; }
+.dot.has { background: #7a5530; }
+.dot.cur { background: #8b2a16; }
+
+/* button rows */
+.brow {
+  display: flex; gap: 8px; justify-content: flex-end;
+  align-items: center; margin-top: auto; padding-top: 8px;
+  position: relative; z-index: 1;
+}
+.nrow {
+  display: flex; gap: 8px; justify-content: space-between;
+  align-items: center; margin-top: auto; padding-top: 8px;
+  position: relative; z-index: 1;
+}
+
+/* ── BUTTONS ── */
+button {
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 11.5px; letter-spacing: 0.06em; cursor: pointer;
+  border-radius: 2px; padding: 7px 18px; border: none;
+  position: relative; z-index: 1;
+}
+.btn-primary  { background: #5a0e08; color: #f5eed8; }
+.btn-primary:hover  { background: #8b2a16; }
+.btn-outline  { background: transparent; color: #2a1208; border: 1px solid rgba(90,50,20,0.28); }
+.btn-outline:hover  { background: rgba(90,50,20,0.07); }
+.btn-danger   { background: transparent; color: #8b2a16; border: none; font-size: 11.5px; }
+.btn-danger:hover   { text-decoration: underline; }
+.btn-nav      { background: #5a0e08; color: #f5eed8; flex: 1; text-align: center; }
+.btn-nav:hover { background: #8b2a16; }
+.btn-nav:disabled { opacity: 0.25; cursor: default; background: #5a0e08; }
+
+/* sign options */
+.sign-opt {
+  display: block; width: 100%; text-align: left;
+  background: rgba(255,255,240,0.5); border: 1px solid rgba(90,50,20,0.16);
+  border-radius: 2px; padding: 11px 14px; font-size: 13.5px;
+  color: #1a0a06; cursor: pointer;
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  margin-top: 10px; position: relative; z-index: 1;
+}
+.sign-opt:hover { border-color: #8b2a16; background: rgba(255,255,240,0.85); }
+
+/* read page label */
+.read-pnum-right {
+  font-size: 9px; color: #4a2e10; opacity: 0.45; letter-spacing: 0.12em;
+  text-transform: uppercase; margin-bottom: 8px; margin-top: 2px;
+}
+
+/* title page right */
+#sTitlePage .step-label { text-align: center; }
+#tpAuthor { text-align: center; font-style: italic; font-size: 15px; color: #1a0a06; margin-top: 6px; }
+
+.spacer { flex: 1; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div class="book">
+
+    <!-- ════ LEFT PAGE ════ -->
+    <div class="page-left">
+      <div class="left-rules"></div>
+      <div class="lc lc-tl"></div><div class="lc lc-bl"></div>
+      <div class="lc lc-tr"></div><div class="lc lc-br"></div>
+
+      <!-- Decorative (title step) -->
+      <div class="lp decor-panel" id="lpDecor">
+        <div class="decor-orn">✦</div>
+        <div class="decor-rule"></div>
+        <div class="decor-text">A New Story<br>Begins Here</div>
+        <div class="decor-rule"></div>
+        <div class="decor-orn" style="font-size:15px;opacity:0.3;">❧</div>
+      </div>
+
+      <!-- Preview (writing step) -->
+      <div class="lp preview-panel" id="lpPreview">
+        <div class="prev-title" id="prevTitle"></div>
+        <div class="prev-num"  id="prevNum"></div>
+        <div class="prev-body" id="prevBody"></div>
+      </div>
+
+      <!-- Title page left (decorative) -->
+      <div class="lp decor-panel" id="lpTitleDecor">
+        <div class="decor-orn">✦</div>
+        <div class="decor-rule"></div>
+        <div class="decor-text" id="titleDecorText">A Story</div>
+        <div class="decor-rule"></div>
+        <div class="decor-orn" style="font-size:15px;opacity:0.3;">❧</div>
+      </div>
+
+      <!-- Blank left page (buffer spread) -->
+      <div class="lp" id="lpBlank"></div>
+
+      <!-- Read left (facing page while reading) -->
+      <div class="lp read-panel" id="lpRead">
+        <div class="read-pnum" id="readLeftNum" style="text-align:left;margin-bottom:10px;font-style:italic;opacity:0.4;font-size:10px;letter-spacing:0.12em;"></div>
+        <div class="read-body" id="readBody"></div>
+      </div>
+
+      <!-- Published splash -->
+      <div class="lp pub-panel" id="lpPub">
+        <div class="pub-icon">📖</div>
+        <div class="pub-title" id="pubTitle"></div>
+        <div class="pub-sub">Added to your inventory</div>
+      </div>
+    </div>
+
+    <!-- ════ RIGHT PAGE ════ -->
+    <div class="page-right">
+
+      <!-- STEP: Title -->
+      <div class="step on" id="sTitle">
+        <div class="step-label">Begin your work</div>
+        <div class="step-title">Give your book a title</div>
+        <input id="iTitle" type="text" placeholder="Enter a title…" maxlength="80" autocomplete="off">
+        <div class="spacer"></div>
+        <div class="brow">
+          <button class="btn-outline" onclick="doClose()">Cancel</button>
+          <button class="btn-primary" onclick="doTitle()">Begin Writing →</button>
+        </div>
+      </div>
+
+      <!-- STEP: Write -->
+      <div class="step" id="sWrite">
+        <div class="step-label" id="wLabel">Page 1 of 20</div>
+        <div class="step-title" id="wTitle">Write your story</div>
+        <textarea id="iPage" placeholder="Begin writing…" maxlength="800"></textarea>
+        <div class="char-note" id="wChars">0 / 800</div>
+        <div id="dots"></div>
+        <div class="brow">
+          <button class="btn-danger"  onclick="doAbandon()">Abandon</button>
+          <button class="btn-outline" id="bPrev" onclick="doPrev()" style="display:none">← Prev</button>
+          <button class="btn-outline" onclick="doFinish()">Finish &amp; Publish</button>
+          <button class="btn-primary" onclick="doNext()">Next Page →</button>
+        </div>
+      </div>
+
+      <!-- STEP: Sign -->
+      <div class="step" id="sSign">
+        <div class="step-label">Almost done</div>
+        <div class="step-title">Sign your work?</div>
+        <button class="sign-opt" onclick="goStep('sSignInput')">✒️ &nbsp; Yes — add my signature</button>
+        <button class="sign-opt" onclick="doPublish(false)">📜 &nbsp; No — publish anonymously</button>
+        <div class="spacer"></div>
+        <div class="brow">
+          <button class="btn-outline" onclick="goStep('sWrite')">← Back</button>
+        </div>
+      </div>
+
+      <!-- STEP: Signature -->
+      <div class="step" id="sSignInput">
+        <div class="step-label">Your signature</div>
+        <div class="step-title">Sign the book</div>
+        <input id="iSig" type="text" placeholder="e.g. John Smith" maxlength="60" autocomplete="off">
+        <div class="spacer"></div>
+        <div class="brow">
+          <button class="btn-outline" onclick="goStep('sSign')">← Back</button>
+          <button class="btn-primary" onclick="doPublish(true)">Publish Book →</button>
+        </div>
+      </div>
+
+      <!-- STEP: Done -->
+      <div class="step" id="sDone">
+        <div class="step-label">Published</div>
+        <div class="step-title" id="dTitle"></div>
+        <div class="spacer"></div>
+        <p style="font-size:13px;color:#5a3e18;opacity:0.6;font-style:italic;">
+          Your book has been added to your inventory.
+        </p>
+      </div>
+
+      <!-- STEP: Read title page -->
+      <div class="step" id="sTitlePage">
+        <div class="spacer"></div>
+        <div style="text-align:center;">
+          <div class="step-label" style="text-align:center;letter-spacing:0.18em;">— a work by —</div>
+          <div class="step-title" id="tpAuthor" style="text-align:center;font-style:italic;font-size:15px;margin-top:6px;"></div>
+        </div>
+        <div class="spacer"></div>
+        <div class="nrow">
+          <button class="btn-outline" onclick="doClose()">Close</button>
+          <button class="btn-nav" onclick="readNext()">Begin Reading →</button>
+        </div>
+      </div>
+
+      <!-- STEP: Read (facing pages) -->
+      <div class="step" id="sRead">
+        <div class="step-label" id="rLabel">Page 1 of 20</div>
+        <div class="read-body" id="rBody" style="font-size:14px;margin-top:8px;"></div>
+        <div class="nrow">
+          <button class="btn-nav" id="bReadPrev" onclick="readPrev()">← Previous</button>
+          <button class="btn-outline" onclick="doClose()" style="flex:0.6;">Close</button>
+          <button class="btn-nav" id="bReadNext" onclick="readNext()">Next →</button>
+        </div>
+      </div>
+
+    </div><!-- end .page-right -->
+  </div><!-- end .book -->
+</div><!-- end #ui -->
+
+<script>
+var MAX = 20, MAXC = 800;
+var bk  = { title:'', pages:[], signed:false, signature:'' };
+var pg  = 0;
+
+// reading state
+var readInfo = null;
+var readPage = 1;
+
+function fresh() {
+  bk = { title:'', pages:[], signed:false, signature:'' };
+  for (var i=0;i<MAX;i++) bk.pages.push('');
+  pg = 0;
+}
+
+// ── NUI messages ──
+window.addEventListener('message', function(e) {
+  console.log('[books] msg: ' + JSON.stringify(e.data).slice(0,80));
+  if (!e.data) return;
+  if (e.data.action === 'openBookWriter') openWriter();
+  if (e.data.action === 'openBookReader') openReader(e.data.info, e.data.page || 1);
+  if (e.data.action === 'escPressed')     doClose();
+});
+
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') doClose();
+});
+
+document.addEventListener('click', function(e) {
+  console.log('[books] click: ' + e.target.tagName + ' "' + e.target.textContent.trim().slice(0,20) + '"');
+});
+
+// ── Left panel helper ──
+function showLeft(id) {
+  ['lpDecor','lpPreview','lpRead','lpPub','lpTitleDecor','lpBlank'].forEach(function(p){
+    document.getElementById(p).classList.remove('show');
+  });
+  document.getElementById(id).classList.add('show');
+}
+
+// ── Step helper ──
+function goStep(id) {
+  console.log('[books] step -> ' + id);
+  ['sTitle','sWrite','sSign','sSignInput','sDone','sRead','sTitlePage'].forEach(function(s){
+    document.getElementById(s).classList.remove('on');
+  });
+  document.getElementById(id).classList.add('on');
+}
+
+// ══════════════════════════════
+// WRITER
+// ══════════════════════════════
+function openWriter() {
+  fresh();
+  document.getElementById('iTitle').value = '';
+  document.getElementById('iPage').value  = '';
+  document.getElementById('iSig').value   = '';
+  showLeft('lpDecor');
+  goStep('sTitle');
+  document.getElementById('ui').classList.add('on');
+  setTimeout(function(){ document.getElementById('iTitle').focus(); }, 80);
+}
+
+function doClose() {
+  console.log('[books] closing');
+  document.getElementById('ui').classList.remove('on');
+  readInfo = null;
+  post('bookClosed', {});
+}
+
+// Title
+function doTitle() {
+  var v = document.getElementById('iTitle').value.trim();
+  if (!v) { document.getElementById('iTitle').focus(); return; }
+  bk.title = v;
+  pg = 0;
+  loadWritePage();
+}
+document.getElementById('iTitle').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') doTitle();
+});
+
+// Write
+function loadWritePage() {
+  goStep('sWrite');
+  showLeft('lpPreview');
+  document.getElementById('wLabel').textContent = 'Page ' + (pg+1) + ' of ' + MAX;
+  document.getElementById('wTitle').textContent = pg === 0 ? 'Write your story' : 'Continue — page ' + (pg+1);
+  document.getElementById('bPrev').style.display = pg > 0 ? 'inline-block' : 'none';
+  document.getElementById('iPage').value = bk.pages[pg];
+  document.getElementById('prevTitle').textContent = bk.title;
+  document.getElementById('prevNum').textContent   = 'Page ' + (pg+1) + ' / ' + MAX;
+  document.getElementById('prevBody').textContent  = bk.pages[pg] || '(blank page)';
+  updateChars();
+  buildDots();
+  setTimeout(function(){ document.getElementById('iPage').focus(); }, 50);
+}
+
+document.getElementById('iPage').addEventListener('input', function(){
+  bk.pages[pg] = this.value;
+  document.getElementById('prevBody').textContent = this.value || '(blank page)';
+  updateChars();
+  buildDots();
+});
+
+function updateChars() {
+  var len = bk.pages[pg].length;
+  var el  = document.getElementById('wChars');
+  el.textContent = len + ' / ' + MAXC;
+  el.className   = 'char-note' + (len > MAXC * 0.85 ? ' warn' : '');
+}
+
+function buildDots() {
+  var c = document.getElementById('dots');
+  c.innerHTML = '';
+  for (var i = 0; i < MAX; i++) {
+    var d = document.createElement('div');
+    d.className = 'dot' + (bk.pages[i].trim() ? ' has' : '') + (i === pg ? ' cur' : '');
+    c.appendChild(d);
+  }
+}
+
+function savePage() { bk.pages[pg] = document.getElementById('iPage').value; }
+
+function doNext() {
+  savePage();
+  if (pg < MAX-1) { pg++; loadWritePage(); }
+}
+function doPrev() {
+  savePage();
+  if (pg > 0) { pg--; loadWritePage(); }
+}
+function doAbandon() { doClose(); }
+
+function doFinish() {
+  savePage();
+  var has = bk.pages.some(function(p){ return p.trim(); });
+  if (!has) { document.getElementById('iPage').focus(); return; }
+  goStep('sSign');
+}
+
+// Sign
+document.getElementById('iSig').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') doPublish(true);
+});
+
+function doPublish(signed) {
+  if (signed) {
+    var s = document.getElementById('iSig').value.trim();
+    if (!s) { document.getElementById('iSig').focus(); return; }
+    bk.signed = true; bk.signature = s;
+  } else {
+    bk.signed = false; bk.signature = '';
+  }
+  document.getElementById('dTitle').textContent = '"' + bk.title + '"';
+  document.getElementById('pubTitle').textContent = bk.title;
+  showLeft('lpPub');
+  goStep('sDone');
+  post('bookPublished', bk);
+  setTimeout(function(){
+    document.getElementById('ui').classList.remove('on');
+    post('bookClosed', {});
+  }, 2500);
+}
+
+// ══════════════════════════════
+// READER
+// ══════════════════════════════
+function openReader(info, page) {
+  readInfo = info;
+  readPage = 0; // always open to title page
+  document.getElementById('ui').classList.add('on');
+  renderReadPage();
+}
+
+function buildPages(info) {
+  var raw = info.content || info.pages || {};
+  var pages = [''];  // blank buffer so page 1 lands on the right
+  for (var i = 0; i < MAX; i++) {
+    var t = (raw[i] !== undefined ? raw[i] : (raw[String(i)] || '')).trim();
+    if (t) pages.push(t);
+  }
+  return pages.length > 1 ? pages : ['', '(This book is empty.)'];
+}
+
+function renderReadPage() {
+  var info  = readInfo;
+  var pages = buildPages(info);
+  var total = pages.length - 1; // real page count (excludes blank buffer at index 0)
+
+  if (readPage === 0) {
+    // ── Title spread ──
+    document.getElementById('titleDecorText').textContent = info.title || 'Untitled';
+    showLeft('lpTitleDecor');
+    var authorLine = (info.signed && info.signature) ? info.signature : 'Anonymous';
+    document.getElementById('tpAuthor').textContent = authorLine;
+    goStep('sTitlePage');
+
+  } else {
+    // ── Content spread ──
+    if (readPage < 1) readPage = 1;
+    if (readPage > pages.length - 1) readPage = pages.length - 1;
+
+    // pages[0] = blank buffer, pages[1] = page 1, pages[2] = page 2, etc.
+    var leftText  = pages[readPage - 1] || ''; // readPage=1 -> pages[0]=blank, readPage=3 -> pages[2]=page2
+    var rightText = pages[readPage]     || ''; // readPage=1 -> pages[1]=page1, readPage=3 -> pages[3]=page3
+
+    // Display page numbers: right side at readPage=1 is page 1, at readPage=3 is page 3
+    var leftNum  = readPage - 1; // readPage=1 -> 0 (blank, not shown), readPage=3 -> 2
+    var rightNum = readPage;     // readPage=1 -> 1, readPage=3 -> 3
+
+    if (leftText) {
+      document.getElementById('readBody').textContent    = leftText;
+      document.getElementById('readLeftNum').textContent = info.title ? info.title.toUpperCase() : '';
+      showLeft('lpRead');
+    } else {
+      showLeft('lpBlank');
+    }
+
+    document.getElementById('rLabel').textContent = rightText ? 'Page ' + rightNum : '';
+    document.getElementById('rBody').textContent  = rightText;
+
+    document.getElementById('bReadPrev').disabled = false;
+    document.getElementById('bReadNext').disabled = readPage >= pages.length - 1;
+    goStep('sRead');
+  }
+}
+
+function readNext() {
+  var pages = buildPages(readInfo);
+  if (readPage === 0) {
+    readPage = 1;
+  } else {
+    readPage += 2;
+    if (readPage > pages.length - 1) readPage = pages.length - 1;
+  }
+  renderReadPage();
+}
+
+function readPrev() {
+  if (readPage <= 1) {
+    readPage = 0; // back to title page
+  } else {
+    readPage -= 2;
+    if (readPage < 1) readPage = 1;
+  }
+  renderReadPage();
+}
+
+// ── Post helper ──
+function post(name, data) {
+  fetch('https://uv-books/' + name, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(function(r){ console.log('[books] ' + name + ' -> ' + r.status); })
+    .catch(function(e){ console.log('[books] ' + name + ' ERR: ' + e); });
+}
+
+console.log('[books] ready');
+</script>
+</body>
+</html>
