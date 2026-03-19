@@ -2,7 +2,7 @@
 ### A QBCore FiveM Resource by CocoDeee
 **Developer & Owner — Uncanny Valley RP**
 
-**Discord For Uncanny Valley: https://discord.gg/tsvqdftrgp Please let me know if you have any issues or need help!**
+**Discord For Uncanny Valley: https://discord.gg/xHhGMqSeFZ Please let me know if you have any issues or need help!**
 
 *If you use this resource, a credit or a star on the repo is always appreciated but never required. Enjoy.*
 
