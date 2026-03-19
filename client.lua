@@ -1,19 +1,50 @@
-local QBCore = exports['qb-core']:GetCoreObject()
+-- ══════════════════════════════════════════════════════════════
+--  uv-books  ·  client.lua
+--  Supports: QBCore, QBox (qbx_core), ox_lib notifications
+-- ══════════════════════════════════════════════════════════════
 
 local MAX_PAGES = 20
 local MAX_CHARS = 800
 local isWriting = false
 
+-- ── Framework detection ──────────────────────────────────────
+
+local Framework = nil
+local QBCore    = nil
+
+CreateThread(function()
+    if GetResourceState("qbx_core") == "started" then
+        Framework = "qbx"
+    elseif GetResourceState("qb-core") == "started" then
+        Framework = "qb"
+        QBCore = exports["qb-core"]:GetCoreObject()
+    end
+end)
+
+
+-- ── Helper: client-side notification ─────────────────────────
+
+local function Notify(msg, nType)
+    if GetResourceState("ox_lib") == "started" then
+        exports.ox_lib:notify({
+            description = msg,
+            type        = nType or "info",
+        })
+    elseif Framework == "qb" and QBCore then
+        QBCore.Functions.Notify(msg, nType)
+    else
+        print("[uv-books] " .. (nType or "info") .. ": " .. msg)
+    end
+end
+
+
 -- ── Open the book writer NUI ──
 RegisterNetEvent("uv-books:client:startWriting", function()
-    print("[uv-books] startWriting. isWriting=" .. tostring(isWriting))
     if isWriting then return end
     isWriting = true
     SetNuiFocus(true, true)
     SendNUIMessage({ action = "openBookWriter" })
 
-    -- Re-assert focus a few times on open to beat other resources,
-    -- stops as soon as isWriting goes false
     Citizen.CreateThread(function()
         local ticks = 0
         while isWriting and ticks < 10 do
@@ -27,7 +58,7 @@ end)
 -- ── Open the book reader NUI ──
 RegisterNetEvent("uv-books:client:readBook", function(info, page)
     if not info then
-        QBCore.Functions.Notify("This book seems corrupted.", "error")
+        Notify("This book seems corrupted.", "error")
         return
     end
     if isWriting then return end
@@ -60,7 +91,6 @@ Citizen.CreateThread(function()
             if (now - lastEsc) > 600 then
                 if IsControlJustPressed(0, 202) or IsControlJustPressed(0, 322) then
                     lastEsc = now
-                    print("[uv-books] ESC detected")
                     SendNUIMessage({ action = "escPressed" })
                 end
             end
@@ -76,7 +106,6 @@ RegisterNUICallback("draftSaved", function(data, cb)
 end)
 
 RegisterNUICallback("bookPublished", function(data, cb)
-    print("[uv-books] bookPublished received")
     cb("ok")
 
     if not data then return end
@@ -96,7 +125,6 @@ RegisterNUICallback("bookPublished", function(data, cb)
         signature = type(data.signature) == "string" and data.signature or ""
     }
 
-    print("[uv-books] Creating book: " .. bookDraft.title)
     TriggerServerEvent("uv-books:server:createBook", bookDraft)
 
     isWriting = false
@@ -105,7 +133,6 @@ RegisterNUICallback("bookPublished", function(data, cb)
 end)
 
 RegisterNUICallback("bookClosed", function(data, cb)
-    print("[uv-books] bookClosed received")
     isWriting = false
     SetNuiFocus(false, false)
     SetNuiFocusKeepInput(false)
