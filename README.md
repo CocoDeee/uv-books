@@ -52,6 +52,18 @@ In your QBCore shared items file (`qb-core/shared/items.lua`), add the following
 ```lua
 ['book'] = {['name'] = 'book', ['label'] = 'Book', ['weight'] = 500, ['type'] = 'item', ['image'] = 'book.png', ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['description'] = 'A blank book, waiting to be written in.'},
 ```
+For Qbox/ ox_inventory:
+
+['book'] = {
+    label = 'Book',
+    weight = 200,
+    stack = false,
+    close = true,
+    consume = 0,
+    server = {
+        export = 'uv-books.book'
+    }
+},
 
 ### 3. Add the item image
 Place `book.png` into your inventory images folder.
