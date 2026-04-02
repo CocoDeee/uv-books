@@ -2,6 +2,8 @@
 ### A QBCore FiveM Resource by CocoDeee
 **Developer & Owner — Uncanny Valley RP**
 
+## NOTICE: This is version 1 There is a newer better version here: https://github.com/CocoDeee/uv-books2.0
+
 **Discord For Uncanny Valley: https://discord.gg/xHhGMqSeFZ Please let me know if you have any issues or need help!**
 
 *If you use this resource, a credit or a star on the repo is always appreciated but never required. Enjoy.*
